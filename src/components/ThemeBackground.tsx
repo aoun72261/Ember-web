@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useThemeStore } from '@/store/themeStore'
 
 // Static background styles
@@ -12,6 +13,11 @@ const STATIC_STYLES: Record<string, string> = {
 
 export default function ThemeBackground() {
   const { themeId } = useThemeStore()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  // During SSR and first render, show a neutral dark background
+  if (!mounted) return <div className="fixed inset-0 -z-10 bg-[#0A0A0A]" />
 
   if (STATIC_STYLES[themeId]) {
     const bg = STATIC_STYLES[themeId]
