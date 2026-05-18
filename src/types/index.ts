@@ -17,6 +17,7 @@ export interface Artist {
   image: string
   genres: string[]
   spotifyId: string
+  popularity?: number
 }
 
 export interface Album {

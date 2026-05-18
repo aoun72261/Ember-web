@@ -11,9 +11,7 @@ import type { Track, Artist } from '@/types/index'
 interface ArtistData {
   artist: Artist
   topTracks: Track[]
-  related: Artist[]
-  popularity: number
-  genres: string[]
+  relatedArtists: Artist[]
 }
 
 export default function ArtistPage() {
@@ -23,7 +21,7 @@ export default function ArtistPage() {
   const { playTrack } = usePlayerStore()
 
   useEffect(() => {
-    fetch(`/api/artist/${id}`)
+    fetch(`/api/artists/${id}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => setData(d))
       .finally(() => setLoading(false))
@@ -46,7 +44,9 @@ export default function ArtistPage() {
     )
   }
 
-  const { artist, topTracks, related, popularity, genres } = data
+  const { artist, topTracks, relatedArtists } = data
+  const genres = artist.genres ?? []
+  const popularity = artist.popularity ?? 0
 
   return (
     <div className="min-h-full pb-32">
@@ -59,10 +59,10 @@ export default function ArtistPage() {
           </>
         )}
         <div className="absolute bottom-0 left-0 right-0 px-8 pb-7">
-          <p className="text-[11px] font-bold text-[#FF6B35] uppercase tracking-[0.16em] mb-1">Artist</p>
+          <p className="text-[11px] font-bold text-[#F97316] uppercase tracking-[0.16em] mb-1">Artist</p>
           <h1 className="text-[44px] font-black text-white leading-none tracking-tight">{artist.name}</h1>
           {genres.length > 0 && (
-            <p className="text-[12px] text-[#6A6560] mt-2 capitalize">{genres.slice(0, 3).join(' · ')}</p>
+            <p className="text-[12px] text-white/40 mt-2 capitalize">{genres.slice(0, 3).join(' · ')}</p>
           )}
         </div>
       </div>
@@ -72,19 +72,22 @@ export default function ArtistPage() {
         {topTracks.length > 0 && (
           <button
             onClick={() => playTrack(topTracks[0], topTracks)}
-            className="w-12 h-12 rounded-full bg-[#FF6B35] hover:bg-[#FF7D4D] flex items-center justify-center shadow-lg shadow-[#FF6B35]/30 transition-all hover:scale-105 active:scale-95"
+            className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #F97316, #A855F7)', boxShadow: '0 4px 20px rgba(249,115,22,0.35)' }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#000" style={{ marginLeft: 2 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 2 }}>
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
           </button>
         )}
-        <div className="flex items-center gap-1.5">
-          <div className="h-1.5 w-20 rounded-full bg-white/[0.08] overflow-hidden">
-            <div className="h-full rounded-full bg-[#FF6B35]" style={{ width: `${popularity}%` }} />
+        {popularity > 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="h-1.5 w-20 rounded-full bg-white/[0.08] overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${popularity}%`, background: 'linear-gradient(to right, #F97316, #A855F7)' }} />
+            </div>
+            <span className="text-[11px] text-white/30">{popularity}% popularity</span>
           </div>
-          <span className="text-[11px] text-[#4A4540]">{popularity}% popularity</span>
-        </div>
+        )}
       </div>
 
       <div className="px-5 flex flex-col gap-10">
@@ -101,11 +104,11 @@ export default function ArtistPage() {
         )}
 
         {/* Related artists */}
-        {related.length > 0 && (
+        {relatedArtists.length > 0 && (
           <section className="px-3">
             <h2 className="text-[17px] font-bold text-[#F5F0EB] mb-4">Fans also like</h2>
             <div className="grid grid-cols-3 gap-4">
-              {related.map(a => (
+              {relatedArtists.map(a => (
                 <Link key={a.id} href={`/artist/${a.id}`} className="flex flex-col items-center gap-2 group">
                   <div className="relative w-full aspect-square rounded-full overflow-hidden bg-white/[0.06]"
                     style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
@@ -114,7 +117,7 @@ export default function ArtistPage() {
                   <p className="text-[12px] font-semibold text-[#C0BBB5] group-hover:text-white transition-colors text-center truncate w-full">
                     {a.name}
                   </p>
-                  <p className="text-[10px] text-[#4A4540] -mt-1">Artist</p>
+                  <p className="text-[10px] text-white/25 -mt-1">Artist</p>
                 </Link>
               ))}
             </div>

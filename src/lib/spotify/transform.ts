@@ -23,6 +23,7 @@ export function transformArtist(a: SpotifyArtist): Artist {
     image: a.images[0]?.url ?? '',
     genres: a.genres ?? [],
     spotifyId: a.id,
+    popularity: a.popularity,
   }
 }
 
