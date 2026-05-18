@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { usePlayerStore } from '@/store/playerStore'
 
 declare global {
@@ -54,6 +54,10 @@ export function useYouTubePlayer(containerId: string) {
   // When we load a new video the YouTube IFrame API fires ENDED for the old one —
   // suppress that spurious event so we don't accidentally skip to next()
   const suppressEndedRef = useRef(false)
+  // Incremented each time the YouTube player becomes ready — used as a dependency
+  // to force the video-loading effect to re-run when the player is recreated
+  // (e.g. after a navigation-triggered component remount)
+  const [playerReadyVersion, setPlayerReadyVersion] = useState(0)
 
   const { currentTrack, isPlaying, volume, isMuted, repeatMode,
           setProgress, setDuration, setLoading, next, queue, queueIndex } = usePlayerStore()
@@ -152,6 +156,9 @@ export function useYouTubePlayer(containerId: string) {
               }
               pendingVideoIdRef.current = null
             }
+            // Bump version so the video-loading effect re-runs with the
+            // persisted currentTrack (handles navigation-triggered remounts)
+            setPlayerReadyVersion(v => v + 1)
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onStateChange: (event: any) => {
@@ -233,7 +240,10 @@ export function useYouTubePlayer(containerId: string) {
       }
     }
     loadVideo()
-  }, [currentTrack?.spotifyId, currentTrack?.youtubeVideoId]) // eslint-disable-line react-hooks/exhaustive-deps
+  // playerReadyVersion is intentionally included: when the IFrame player is
+  // recreated after a remount, we need to re-run this effect even though
+  // currentTrack hasn't changed, so the video is restored.
+  }, [currentTrack?.spotifyId, currentTrack?.youtubeVideoId, playerReadyVersion]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync play/pause + ensure progress tracking stays alive
   useEffect(() => {
