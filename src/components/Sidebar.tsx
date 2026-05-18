@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useTransition, useRef, useCallback } from 'react'
 import { signOut } from '@/app/actions/auth'
 import { createClient } from '@/lib/supabase/client'
+import ThemePicker from './ThemePicker'
 
 interface Playlist { id: string; name: string; cover_art: string | null }
 interface UserInfo { username: string; email: string }
@@ -95,6 +96,7 @@ export default function Sidebar() {
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
   const [unreadSends, setUnreadSends] = useState(0)
+  const [themePickerOpen, setThemePickerOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH)
   const isDragging = useRef(false)
@@ -497,6 +499,18 @@ export default function Sidebar() {
               </svg>
               Settings
             </Link>
+            {/* Theme picker */}
+            <button
+              onClick={() => { setShowUserMenu(false); setThemePickerOpen(true) }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-[12.5px] text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 2a10 10 0 0 1 0 20"/>
+                <path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>
+              </svg>
+              Theme &amp; Wallpaper
+            </button>
             <button
               onClick={handleSignOut}
               disabled={isPending}
@@ -538,6 +552,8 @@ export default function Sidebar() {
         </button>
       </div>
 
+      {/* Theme Picker modal */}
+      {themePickerOpen && <ThemePicker onClose={() => setThemePickerOpen(false)} />}
     </aside>
   )
 }
