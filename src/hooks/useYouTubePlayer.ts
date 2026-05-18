@@ -51,6 +51,9 @@ export function useYouTubePlayer(containerId: string) {
   const pendingVideoIdRef = useRef<string | null>(null)
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const currentVideoIdRef = useRef<string | null>(null)
+  // When we load a new video the YouTube IFrame API fires ENDED for the old one —
+  // suppress that spurious event so we don't accidentally skip to next()
+  const suppressEndedRef = useRef(false)
 
   const { currentTrack, isPlaying, volume, isMuted, repeatMode,
           setProgress, setDuration, setLoading, next, queue, queueIndex } = usePlayerStore()
@@ -116,9 +119,13 @@ export function useYouTubePlayer(containerId: string) {
       return
     }
     try {
+      // Suppress the spurious ENDED event the IFrame API fires for the
+      // currently-playing video when loadVideoById replaces it.
+      suppressEndedRef.current = true
       playerRef.current.loadVideoById(videoId)
     } catch (e) {
       console.error('[YouTubePlayer] loadVideoById failed', e)
+      suppressEndedRef.current = false
     }
   }, [])
 
@@ -149,16 +156,23 @@ export function useYouTubePlayer(containerId: string) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onStateChange: (event: any) => {
             const S = { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 }
-            if (event.data === S.PLAYING)   { setLoading(false); startTrackingRef.current() }
+            if (event.data === S.PLAYING) {
+              // New video is actually playing — lift suppression
+              suppressEndedRef.current = false
+              setLoading(false)
+              startTrackingRef.current()
+            }
             if (event.data === S.PAUSED)    { clearTrackingRef.current() }
             if (event.data === S.BUFFERING) { setLoading(true) }
             if (event.data === S.ENDED) {
+              // Ignore the spurious ENDED fired when loadVideoById replaces a video
+              if (suppressEndedRef.current) { suppressEndedRef.current = false; return }
               clearTrackingRef.current()
               if (repeatModeRef.current === 'one') { playerRef.current?.seekTo(0, true); playerRef.current?.playVideo() }
               else nextRef.current()
             }
           },
-          onError: () => { setLoading(false); nextRef.current() },
+          onError: () => { suppressEndedRef.current = false; setLoading(false); nextRef.current() },
         },
       })
     })
