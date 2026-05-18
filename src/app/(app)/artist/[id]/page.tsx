@@ -50,22 +50,37 @@ export default function ArtistPage() {
 
   return (
     <div className="min-h-full pb-32">
-      {/* Hero */}
-      <div className="relative h-[280px] overflow-hidden">
-        {artist.image && (
-          <>
-            <Image src={artist.image} alt={artist.name} fill className="object-cover object-top scale-105" sizes="100vw" priority />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent" />
-          </>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 px-8 pb-7">
-          <p className="text-[11px] font-bold text-[#F97316] uppercase tracking-[0.16em] mb-1">Artist</p>
-          <h1 className="text-[44px] font-black text-white leading-none tracking-tight">{artist.name}</h1>
-          {genres.length > 0 && (
-            <p className="text-[12px] text-white/40 mt-2 capitalize">{genres.slice(0, 3).join(' · ')}</p>
-          )}
-        </div>
-      </div>
+      {/* Hero — artist photo if available, else blurred album art fallback */}
+      {(() => {
+        const heroBg = artist.image || topTracks[0]?.albumArt || null
+        return (
+          <div className="relative h-[300px] overflow-hidden">
+            {heroBg ? (
+              <>
+                <Image
+                  src={heroBg}
+                  alt={artist.name}
+                  fill
+                  className={`object-cover object-top scale-105 ${!artist.image ? 'blur-md scale-110 opacity-60' : ''}`}
+                  sizes="100vw"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/50 to-transparent" />
+              </>
+            ) : (
+              /* Pure colour fallback */
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #1a0a2e 0%, #0d0818 100%)' }} />
+            )}
+            <div className="absolute bottom-0 left-0 right-0 px-8 pb-7">
+              <p className="text-[11px] font-bold text-[#F97316] uppercase tracking-[0.16em] mb-1">Artist</p>
+              <h1 className="text-[44px] font-black text-white leading-none tracking-tight drop-shadow-lg">{artist.name}</h1>
+              {genres.length > 0 && (
+                <p className="text-[12px] text-white/50 mt-2 capitalize">{genres.slice(0, 3).join(' · ')}</p>
+              )}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Play + stats */}
       <div className="px-8 py-5 flex items-center gap-4">

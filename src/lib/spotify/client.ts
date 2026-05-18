@@ -93,6 +93,10 @@ export async function getArtist(artistId: string) {
   return spotifyFetch<SpotifyArtist>(`/artists/${artistId}`)
 }
 
+export async function getSeveralArtists(artistIds: string[]) {
+  return spotifyFetch<{ artists: SpotifyArtist[] }>('/artists', { ids: artistIds.slice(0, 50).join(',') })
+}
+
 export async function getArtistTopTracks(artistId: string) {
   return spotifyFetch<{ tracks: SpotifyTrack[] }>(`/artists/${artistId}/top-tracks`, { market: 'US' })
 }

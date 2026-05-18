@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getArtist, searchSpotify } from '@/lib/spotify/client'
+import { getArtist, getSeveralArtists, searchSpotify } from '@/lib/spotify/client'
 import { transformArtist, transformTrack } from '@/lib/spotify/transform'
 
 export async function GET(
@@ -9,11 +9,21 @@ export async function GET(
   const { id } = await params
 
   try {
-    // Fetch artist profile — always available
+    // ── 1. Main artist ──────────────────────────────────────────
     const artist = await getArtist(id)
 
-    // Top tracks: try the dedicated endpoint, fall back to artist name search
-    // (top-tracks and related-artists are 403 for unverified Spotify apps)
+    // If Spotify returned no images (some artists lack profile photos),
+    // fall back to a search result which often has a picture
+    if (!artist.images?.length) {
+      try {
+        const s = await searchSpotify(`artist:"${artist.name}"`, ['artist'])
+        const match = (s.artists?.items ?? []).find(a => a.id === id || a.name.toLowerCase() === artist.name.toLowerCase())
+        if (match?.images?.length) artist.images = match.images
+      } catch { /* ignore */ }
+    }
+
+    // ── 2. Top tracks ───────────────────────────────────────────
+    // Dedicated endpoint is 403 for unverified apps → fall back to search
     let topTracks: ReturnType<typeof transformTrack>[] = []
     try {
       const { tracks } = await import('@/lib/spotify/client').then(m =>
@@ -21,24 +31,25 @@ export async function GET(
       )
       topTracks = tracks.map(transformTrack)
     } catch {
-      // Fallback: search for this artist's songs
       try {
-        const results = await searchSpotify(`artist:${artist.name}`, ['track'])
+        const results = await searchSpotify(`artist:"${artist.name}"`, ['track'])
         topTracks = (results.tracks?.items ?? []).map(transformTrack)
       } catch {
         topTracks = []
       }
     }
 
-    // Related artists: try dedicated endpoint, fall back to multi-strategy search
+    // ── 3. Related artists ──────────────────────────────────────
     let relatedArtists: ReturnType<typeof transformArtist>[] = []
+
+    // Strategy A: dedicated endpoint (403 for dev apps, but try anyway)
     try {
       const { artists } = await import('@/lib/spotify/client').then(m =>
         m.getRelatedArtists(id)
       )
       relatedArtists = artists.slice(0, 10).map(transformArtist)
     } catch {
-      // Fallback strategy 1: genre search (works when artist has genres)
+      // Strategy B: genre search — returns full artist objects with images
       try {
         const genre = artist.genres[0]
         if (genre) {
@@ -48,23 +59,28 @@ export async function GET(
             .slice(0, 8)
             .map(transformArtist)
         }
-      } catch { /* continue to strategy 2 */ }
+      } catch { /* continue to C */ }
 
-      // Fallback strategy 2: search tracks by this artist, pull their collaborators/similar artists
+      // Strategy C: pull collaborator IDs from search tracks, then batch-fetch
+      // full artist profiles so we get real images
       if (relatedArtists.length === 0) {
         try {
-          const results = await searchSpotify(`artist:${artist.name}`, ['track'])
+          const results = await searchSpotify(`artist:"${artist.name}"`, ['track'])
           const artistIds = new Set<string>()
-          const candidates: ReturnType<typeof transformArtist>[] = [];
-          (results.tracks?.items ?? []).forEach(track => {
+          ;(results.tracks?.items ?? []).forEach(track => {
             track.artists.forEach(a => {
-              if (a.id !== id && !artistIds.has(a.id)) {
-                artistIds.add(a.id)
-                candidates.push({ id: a.id, name: a.name, spotifyId: a.id, image: '', genres: [] })
-              }
+              if (a.id !== id && !artistIds.has(a.id)) artistIds.add(a.id)
             })
           })
-          relatedArtists = candidates.slice(0, 8)
+
+          if (artistIds.size > 0) {
+            // Batch-fetch so we get images, genres, popularity
+            const { artists: fullArtists } = await getSeveralArtists([...artistIds])
+            relatedArtists = fullArtists
+              .filter(Boolean)          // Spotify returns null for missing IDs
+              .slice(0, 8)
+              .map(transformArtist)
+          }
         } catch {
           relatedArtists = []
         }
