@@ -203,7 +203,7 @@ export default function Sidebar() {
       </div>
 
       {/* ── Logo ─────────────────────────────────────── */}
-      <div className="px-6 pt-8 pb-7">
+      <div className="px-5 pt-6 pb-5">
         <Link href="/home" className="flex items-center gap-2.5 group w-fit">
           {/* Ember flame logo — SVG with deep purple/amber palette */}
           <div className="w-9 h-9 flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]">
@@ -234,10 +234,8 @@ export default function Sidebar() {
             </svg>
           </div>
           {!collapsed && (
-            <span className="text-[21px] tracking-tight transition-all duration-300
-              bg-gradient-to-r from-[#F97316] via-[#C084FC] to-[#818CF8] bg-clip-text text-transparent
-              group-hover:from-[#FB923C] group-hover:via-[#E879F9] group-hover:to-[#A78BFA]"
-              style={{ fontFamily: 'var(--font-syne)', fontWeight: 800, letterSpacing: '-0.02em' }}>
+            <span className="text-[22px] bg-gradient-to-r from-[#F97316] via-[#C084FC] to-[#818CF8] bg-clip-text text-transparent"
+              style={{ fontWeight: 800, letterSpacing: '-0.03em' }}>
               Ember
             </span>
           )}
@@ -245,7 +243,7 @@ export default function Sidebar() {
       </div>
 
       {/* ── Main Navigation ──────────────────────────── */}
-      <nav className="px-3 flex flex-col gap-0.5">
+      <nav className="px-2 flex flex-col gap-0.5 mb-2">
         {navItems.map(item => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/')
           const badge = item.href === '/social' && unreadSends > 0 ? unreadSends : 0
@@ -253,18 +251,23 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[14px] font-semibold tracking-[-0.01em] transition-all duration-150
-                ${active
-                  ? 'bg-white/[0.09] text-white'
-                  : 'text-[#6B6560] hover:text-[#C0BBB5] hover:bg-white/[0.05]'
-                }`}
+              className={`group relative flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13.5px] font-semibold transition-all duration-200
+                ${active ? 'text-white' : 'text-white/40 hover:text-white/80 hover:bg-white/[0.04]'}`}
+              style={active ? {
+                background: 'linear-gradient(135deg, rgba(249,115,22,0.15) 0%, rgba(168,85,247,0.1) 100%)',
+                boxShadow: 'inset 0 0 0 1px rgba(249,115,22,0.18)',
+              } : {}}
             >
-              <span className={`flex-shrink-0 transition-colors duration-150 ${active ? 'text-[#4A7FFF]' : 'group-hover:text-[#C0BBB5]'}`}>
+              {active && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full"
+                  style={{ background: 'linear-gradient(to bottom, #F97316, #A855F7)' }} />
+              )}
+              <span className={`flex-shrink-0 transition-all duration-200 ${active ? 'text-[#F97316]' : 'group-hover:text-white/60'}`}>
                 {item.icon(active)}
               </span>
-              {!collapsed && item.label}
+              {!collapsed && <span className="truncate">{item.label}</span>}
               {!collapsed && badge > 0 && (
-                <span className="ml-auto w-5 h-5 rounded-full bg-[#4A7FFF] text-white text-[10px] font-black flex items-center justify-center">
+                <span className="ml-auto w-5 h-5 rounded-full bg-[#F97316] text-white text-[10px] font-black flex items-center justify-center">
                   {badge > 9 ? '9+' : badge}
                 </span>
               )}
@@ -272,9 +275,11 @@ export default function Sidebar() {
           )
         })}
       </nav>
+      {/* Divider */}
+      <div className="mx-4 h-px mb-2" style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent)' }} />
 
       {/* ── Your Library ─────────────────────────────── */}
-      <div className="flex-1 flex flex-col mt-4 overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col mt-3 overflow-hidden min-h-0">
 
         {/* Header row */}
         <div className="flex items-center gap-1 px-4 mb-2">
@@ -282,25 +287,25 @@ export default function Sidebar() {
             onClick={() => setSearchOpen(v => { if (!v) setTimeout(() => searchInputRef.current?.focus(), 50); return !v })}
             className="flex items-center gap-2 flex-1 text-left group"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-              className="text-[#6B6560] group-hover:text-white transition-colors flex-shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"
+              className="text-[#F97316]/60 group-hover:text-[#F97316] transition-colors flex-shrink-0">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
-            {!collapsed && <span className="text-[13px] font-bold text-[#6B6560] group-hover:text-white transition-colors">Your Library</span>}
+            {!collapsed && <span className="text-[11.5px] font-bold tracking-widest uppercase text-white/30 group-hover:text-white/60 transition-colors">Library</span>}
           </button>
           {/* Create + link to library */}
           <button
             onClick={() => setCreating(true)}
             title="Create playlist"
-            className="w-8 h-8 rounded-full hover:bg-white/[0.1] flex items-center justify-center text-[#6B6560] hover:text-white transition-all"
+            className="w-7 h-7 rounded-full hover:bg-[#F97316]/15 flex items-center justify-center text-white/30 hover:text-[#F97316] transition-all"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
           </button>
           <Link href="/library" title="Open Library"
-            className="w-8 h-8 rounded-full hover:bg-white/[0.1] flex items-center justify-center text-[#6B6560] hover:text-white transition-all">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            className="w-7 h-7 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-white/30 hover:text-white/80 transition-all">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
               <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
             </svg>
@@ -313,11 +318,15 @@ export default function Sidebar() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1 rounded-full text-[11.5px] font-semibold transition-all capitalize ${
+              className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all capitalize ${
                 filter === f
-                  ? 'bg-white text-black'
-                  : 'bg-white/[0.08] text-[#8A8580] hover:bg-white/[0.14] hover:text-white'
+                  ? 'text-white'
+                  : 'bg-white/[0.06] text-white/35 hover:bg-white/[0.1] hover:text-white/70'
               }`}
+              style={filter === f ? {
+                background: 'linear-gradient(135deg, rgba(249,115,22,0.25) 0%, rgba(168,85,247,0.2) 100%)',
+                boxShadow: 'inset 0 0 0 1px rgba(249,115,22,0.3)',
+              } : {}}
             >
               {f === 'liked' ? 'Liked Songs' : 'Playlists'}
             </button>
@@ -358,11 +367,11 @@ export default function Sidebar() {
           )}
           <button
             onClick={() => setSort(s => s === 'recents' ? 'az' : 'recents')}
-            className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-[#4A4540] hover:text-white transition-colors"
+            className="ml-auto flex items-center gap-1 text-[10.5px] font-bold text-white/25 hover:text-white/60 transition-colors"
             title="Sort"
           >
             <span>{sort === 'recents' ? 'Recents' : 'A–Z'}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
               <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
@@ -383,7 +392,8 @@ export default function Sidebar() {
             />
             <div className="flex gap-2">
               <button onClick={handleCreate} disabled={!newName.trim()}
-                className="flex-1 bg-[#4A7FFF] hover:bg-[#6690FF] disabled:opacity-40 text-white text-[12px] font-bold py-1.5 rounded-lg transition-all">
+                className="flex-1 disabled:opacity-40 text-white text-[12px] font-bold py-1.5 rounded-lg transition-all"
+                style={{ background: 'linear-gradient(135deg, #F97316, #A855F7)' }}>
                 Create
               </button>
               <button onClick={() => { setCreating(false); setNewName('') }}
@@ -450,22 +460,28 @@ export default function Sidebar() {
       </div>
 
       {/* ── User Footer ──────────────────────────────── */}
-      <div className="px-4 pb-5 mt-4 relative">
-        <div className="h-px bg-white/[0.05] mx-3 mb-4" />
+      <div className="px-3 pb-4 mt-2 relative">
+        <div className="h-px mb-3 mx-1" style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent)' }} />
 
         {/* User menu popup */}
         {showUserMenu && (
-          <div className="absolute bottom-full left-4 right-4 mb-2 bg-[#1C1814] border border-white/[0.1] rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-white/[0.06]">
+          <div className="absolute bottom-full left-3 right-3 mb-2 rounded-2xl shadow-2xl overflow-hidden"
+            style={{
+              background: 'rgba(14,10,30,0.92)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid rgba(249,115,22,0.15)',
+            }}>
+            <div className="px-4 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <p className="text-[13px] font-bold text-white">{user?.username}</p>
-              <p className="text-[11px] text-[#4A4540] truncate">{user?.email}</p>
+              <p className="text-[11px] text-white/30 truncate">{user?.email}</p>
             </div>
             <Link
               href="/profile"
               onClick={() => setShowUserMenu(false)}
-              className="flex items-center gap-3 px-4 py-3 text-[13px] text-[#C0BBB5] hover:text-white hover:bg-white/[0.05] transition-colors"
+              className="flex items-center gap-3 px-4 py-2.5 text-[12.5px] text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
               Profile
@@ -473,9 +489,9 @@ export default function Sidebar() {
             <Link
               href="/settings"
               onClick={() => setShowUserMenu(false)}
-              className="flex items-center gap-3 px-4 py-3 text-[13px] text-[#C0BBB5] hover:text-white hover:bg-white/[0.05] transition-colors"
+              className="flex items-center gap-3 px-4 py-2.5 text-[12.5px] text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
@@ -484,9 +500,9 @@ export default function Sidebar() {
             <button
               onClick={handleSignOut}
               disabled={isPending}
-              className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-[#C0392B] hover:bg-[#C0392B]/10 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-[12.5px] text-red-400/80 hover:text-red-400 hover:bg-red-500/10 transition-colors"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
               {isPending ? 'Signing out…' : 'Sign out'}
@@ -496,20 +512,27 @@ export default function Sidebar() {
 
         <button
           onClick={() => setShowUserMenu(v => !v)}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-white/[0.05] transition-all duration-150 group"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.05] transition-all duration-150 group"
         >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4A7FFF] to-[#C0392B] flex items-center justify-center flex-shrink-0 text-[13px] font-black text-white shadow-md">
-            {initial}
+          {/* Avatar with amber-purple ring on hover */}
+          <div className="relative flex-shrink-0">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black text-white shadow-lg"
+              style={{ background: 'linear-gradient(135deg, #F97316, #A855F7)' }}>
+              {initial}
+            </div>
+            <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ boxShadow: '0 0 0 2px rgba(249,115,22,0.45)' }} />
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-[12.5px] font-semibold text-[#C0BBB5] group-hover:text-white truncate transition-colors">
+              <p className="text-[12.5px] font-semibold text-white/70 group-hover:text-white truncate transition-colors">
                 {user?.username ?? 'Profile'}
               </p>
-              <p className="text-[11px] text-[#4A4540] truncate">{user?.email ?? ''}</p>
+              <p className="text-[10.5px] text-white/25 truncate">{user?.email ?? ''}</p>
             </div>
           )}
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4A4540" strokeWidth="2" strokeLinecap="round" className={`flex-shrink-0 transition-transform ${showUserMenu ? 'rotate-180' : ''}`}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            className={`flex-shrink-0 text-white/25 group-hover:text-white/60 transition-all ${showUserMenu ? 'rotate-180' : ''}`}>
             <polyline points="18 15 12 9 6 15"/>
           </svg>
         </button>

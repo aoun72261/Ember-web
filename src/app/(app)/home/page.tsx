@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 interface HomeCache { trendingTracks: Track[]; chillTracks: Track[]; newReleases: Album[] }
 let homeCache: HomeCache | null = null
 let homeCacheExpiry = 0
-const HOME_TTL = 60 * 60 * 1000
+const HOME_TTL = 30 * 60 * 1000
 
 // ── Per-user Spotify recommendation cache (30-min TTL) ────────
 interface UserCache {
@@ -24,15 +24,16 @@ const userCache = new Map<string, UserCache>()
 const USER_TTL = 30 * 60 * 1000
 
 // ── Queries — use specific artists so we get real album art, not compilations ──
+// Each entry has 3-4 artists so a single pick gives diverse results
 const TRENDING_QUERIES = [
-  'artist:"Sabrina Carpenter" year:2024-2025',
-  'artist:"Kendrick Lamar" year:2024-2025',
-  'artist:"Chappell Roan" year:2024-2025',
-  'artist:"The Weeknd" year:2024-2025',
-  'artist:"Billie Eilish" year:2024-2025',
-  'artist:"Drake" year:2024-2025',
-  'artist:"Doechii" year:2024-2025',
-  'artist:"Gracie Abrams" year:2024-2025',
+  'artist:"Lady Gaga" OR artist:"Bruno Mars" OR artist:"Kendrick Lamar" year:2025',
+  'artist:"Billie Eilish" OR artist:"Olivia Rodrigo" OR artist:"Ella Langley" year:2025',
+  'artist:"The Weeknd" OR artist:"Drake" OR artist:"Travis Scott" year:2024-2025',
+  'artist:"Sabrina Carpenter" OR artist:"Chappell Roan" OR artist:"Gracie Abrams" year:2024-2025',
+  'artist:"Post Malone" OR artist:"Morgan Wallen" OR artist:"Zach Bryan" year:2024-2025',
+  'artist:"Taylor Swift" OR artist:"Ariana Grande" OR artist:"Doja Cat" year:2024-2025',
+  'artist:"SZA" OR artist:"Doechii" OR artist:"Cardi B" year:2024-2025',
+  'artist:"Bad Bunny" OR artist:"Peso Pluma" OR artist:"Feid" year:2024-2025',
 ]
 const CHILL_QUERIES = [
   'artist:"Frank Ocean"',
@@ -178,8 +179,15 @@ export default async function HomePage() {
 
         if (artistTracksRes.status === 'fulfilled') {
           const seen = new Set<string>()
+          // Exclude songs the user has already listened to recently
+          const recentIds = new Set(recentlyPlayed.map(t => t.spotifyId))
+          const topIds = new Set(topHistoryTracks.map(t => t.spotifyId))
           recommendedTracks = (artistTracksRes.value.tracks?.items ?? [])
-            .filter(t => { if (seen.has(t.id) || !t.album?.images?.[0]) return false; seen.add(t.id); return true })
+            .filter(t => {
+              if (seen.has(t.id) || !t.album?.images?.[0]) return false
+              if (recentIds.has(t.id) || topIds.has(t.id)) return false // exclude already played
+              seen.add(t.id); return true
+            })
             .map(transformTrack)
             .sort(() => Math.random() - 0.5)
             .slice(0, 24)
