@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <radialGradient id="bg-glow" cx="50%" cy="70%" r="60%">
+      <stop offset="0%" stop-color="#2D1060"/>
+      <stop offset="100%" stop-color="#0D0818"/>
+    </radialGradient>
+    <linearGradient id="flame-outer" x1="20" y1="36" x2="20" y2="5" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F97316"/>
+      <stop offset="45%" stop-color="#C026D3"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="flame-inner" x1="20" y1="34" x2="20" y2="13" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="55%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#E879F9"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="40" height="40" rx="11" fill="url(#bg-glow)"/>
+
+  <!-- Outer ember glow -->
+  <ellipse cx="20" cy="30" rx="9" ry="5" fill="#F97316" opacity="0.18"/>
+
+  <!-- Outer flame body -->
+  <path d="M20 5
+    C20 5 27 13 27 21
+    C27 24 25.5 27 23 29.5
+    C21.5 31 20 32 20 32
+    C20 32 18.5 31 17 29.5
+    C14.5 27 13 24 13 21
+    C13 13 20 5 20 5Z"
+    fill="url(#flame-outer)" filter="url(#glow)"/>
+
+  <!-- Left curl -->
+  <path d="M16 20 C14 17 15 13 17 11 C16 15 17 18 19 20Z"
+    fill="#7C3AED" opacity="0.5"/>
+
+  <!-- Inner flame -->
+  <path d="M20 13
+    C20 13 24 19 24 24
+    C24 28 22.2 31 20 31
+    C17.8 31 16 28 16 24
+    C16 19 20 13 20 13Z"
+    fill="url(#flame-inner)" opacity="0.9"/>
+
+  <!-- Hot core -->
+  <ellipse cx="20" cy="27" rx="3" ry="4" fill="#FDE68A" opacity="0.5"/>
+  <ellipse cx="20" cy="28.5" rx="1.5" ry="2" fill="white" opacity="0.4"/>
+</svg>
