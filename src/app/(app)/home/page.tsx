@@ -23,8 +23,7 @@ interface UserCache {
 const userCache = new Map<string, UserCache>()
 const USER_TTL = 30 * 60 * 1000
 
-// ── Queries — use specific artists so we get real album art, not compilations ──
-// Each entry has 3-4 artists so a single pick gives diverse results
+// ── Trending / Chill queries ──────────────────────────────────
 const TRENDING_QUERIES = [
   'artist:"Lady Gaga" OR artist:"Bruno Mars" OR artist:"Kendrick Lamar" year:2025',
   'artist:"Billie Eilish" OR artist:"Olivia Rodrigo" OR artist:"Ella Langley" year:2025',
@@ -41,20 +40,82 @@ const CHILL_QUERIES = [
   'artist:"Rex Orange County" year:2024-2025',
 ]
 
+// ── Regional artist pools ─────────────────────────────────────
+// Large pools so we can pick random subsets → variety every refresh
+const REGION_POOLS: Record<string, string[]> = {
+  southAsia: [
+    'Arijit Singh', 'AP Dhillon', 'Atif Aslam', 'Talha Anjum', 'Hasan Raheem',
+    'Talhah Yunus', 'Bilal Saeed', 'Shamoon Ismail', 'Asim Azhar', 'Kaifi Khalil',
+    'Ali Zafar', 'Rahat Fateh Ali Khan', 'Hadiqa Kiani', 'Young Stunners', 'Sajjad Ali',
+    'Noori', 'Junoon', 'Arooj Aftab', 'Naseebo Lal', 'Abrar ul Haq',
+    'Darshan Raval', 'Jubin Nautiyal', 'Armaan Malik', 'B Praak', 'Guru Randhawa',
+    'Badshah', 'Diljit Dosanjh', 'Sidhu Moosewala', 'Shubh', 'Karan Aujla',
+  ],
+  kpop: [
+    'BTS', 'BLACKPINK', 'NewJeans', 'aespa', 'IVE', 'Stray Kids',
+    'TWICE', 'EXO', 'SHINee', 'Red Velvet', 'ITZY', 'Monsta X',
+    'NCT 127', 'GOT7', 'SEVENTEEN', 'TXT', 'ENHYPEN', 'LE SSERAFIM',
+  ],
+  afrobeats: [
+    'Burna Boy', 'Wizkid', 'Davido', 'Fireboy DML', 'Rema', 'Ckay',
+    'Omah Lay', 'Tems', 'Kizz Daniel', 'Tekno', 'Joeboy', 'Ayra Starr',
+    'Asake', 'Seun Kuti', 'Patoranking', 'Stonebwoy',
+  ],
+  latin: [
+    'Bad Bunny', 'Karol G', 'J Balvin', 'Ozuna', 'Rauw Alejandro',
+    'Anuel AA', 'Myke Towers', 'Farruko', 'Nicky Jam', 'Daddy Yankee',
+    'Maluma', 'CNCO', 'Sech', 'Jhay Cortez', 'Becky G',
+  ],
+  jpop: [
+    'Yoasobi', 'Fujii Kaze', 'Official HIGE Dandism', 'Ado', 'King Gnu',
+    'Kenshi Yonezu', 'Aimyon', 'Hikaru Utada', 'ONE OK ROCK', 'LiSA',
+    'Yorushika', 'Eve', 'Vaundy', 'Creepy Nuts',
+  ],
+}
+
+// Build an artist-OR query from a random subset of the pool,
+// excluding artists the user already listens to
+function buildRegionalQuery(pool: string[], exclude: string[], count = 4): string {
+  const excludeLower = new Set(exclude.map(a => a.toLowerCase()))
+  const available = pool.filter(a => !excludeLower.has(a.toLowerCase()))
+  const shuffled = [...available].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, count).map(a => `artist:"${a}"`).join(' OR ')
+}
+
 // ── Region detection ──────────────────────────────────────────
-interface RegionInfo { query: string; label: string }
+interface RegionInfo { poolKey: string; trendingQuery: string; label: string }
 function detectRegion(artists: string[], genres: string[]): RegionInfo | null {
   const text = [...artists, ...genres].join(' ').toLowerCase()
   if (/desi|bollywood|punjabi|urdu|ghazal|qawwali|filmi|sufi|coke studio|pakistan|hindi film/.test(text))
-    return { query: 'artist:"Arijit Singh" OR artist:"AP Dhillon" OR artist:"Atif Aslam"', label: 'Trending in South Asia' }
+    return {
+      poolKey: 'southAsia',
+      trendingQuery: 'artist:"Arijit Singh" OR artist:"AP Dhillon" OR artist:"Atif Aslam"',
+      label: 'Trending in South Asia',
+    }
   if (/k-pop|kpop|korean pop/.test(text))
-    return { query: 'artist:"BTS" OR artist:"BLACKPINK" OR artist:"NewJeans" year:2024-2025', label: 'Trending K-Pop' }
+    return {
+      poolKey: 'kpop',
+      trendingQuery: 'artist:"BTS" OR artist:"BLACKPINK" OR artist:"NewJeans" year:2024-2025',
+      label: 'Trending K-Pop',
+    }
   if (/afrobeats|afropop|amapiano|naija/.test(text))
-    return { query: 'artist:"Burna Boy" OR artist:"Wizkid" OR artist:"Davido" year:2024-2025', label: 'Trending Afrobeats' }
+    return {
+      poolKey: 'afrobeats',
+      trendingQuery: 'artist:"Burna Boy" OR artist:"Wizkid" OR artist:"Davido" year:2024-2025',
+      label: 'Trending Afrobeats',
+    }
   if (/latin|reggaeton|latin pop|trap latino/.test(text))
-    return { query: 'artist:"Bad Bunny" OR artist:"Karol G" OR artist:"J Balvin" year:2024-2025', label: 'Trending Latin' }
+    return {
+      poolKey: 'latin',
+      trendingQuery: 'artist:"Bad Bunny" OR artist:"Karol G" OR artist:"J Balvin" year:2024-2025',
+      label: 'Trending Latin',
+    }
   if (/j-pop|jpop|anime|visual kei/.test(text))
-    return { query: 'artist:"Yoasobi" OR artist:"Fujii Kaze" year:2024-2025', label: 'Trending J-Pop & Anime' }
+    return {
+      poolKey: 'jpop',
+      trendingQuery: 'artist:"Yoasobi" OR artist:"Fujii Kaze" year:2024-2025',
+      label: 'Trending J-Pop & Anime',
+    }
   return null
 }
 
@@ -157,51 +218,84 @@ export default async function HomePage() {
       regionalLabel      = cached.regionalLabel
     } else {
       try {
-        // CALL 1: combined artist search (1 call replaces 4)
-        const artistQuery = topHistoryArtists.slice(0, 3).map(a => `artist:"${a}"`).join(' OR ')
-        const [artistTracksRes, artistObjRes] = await Promise.allSettled([
-          searchSpotify(artistQuery, ['track']),
-          searchSpotify(`artist:"${topHistoryArtists[0]}"`, ['artist']),
-        ])
-
+        // ── Step 1: detect user's region/genre from their top artist ──
+        const artistObjRes = await searchSpotify(`artist:"${topHistoryArtists[0]}"`, ['artist']).catch(() => null)
         const genres: string[] = []
-        if (artistObjRes.status === 'fulfilled') {
-          artistObjRes.value.artists?.items[0]?.genres?.slice(0, 4).forEach(g => genres.push(g))
-        }
-
+        artistObjRes?.artists?.items[0]?.genres?.slice(0, 5).forEach((g: string) => genres.push(g))
         const regionInfo = detectRegion(topHistoryArtists, genres)
 
-        // CALL 3 (optional): regional
-        let regionalRes = null
+        const heardIds = new Set([
+          ...recentlyPlayed.map(t => t.spotifyId),
+          ...topHistoryTracks.map(t => t.spotifyId),
+        ])
+
+        // ── Step 2: build personalised queries ───────────────────
+        // Query A: fresh artists from the SAME region the user listens to
+        //          (excludes their own top artists → genuinely new music)
+        // Query B: a mix that includes some of their familiar artists
+        //          so the list isn't completely foreign
+        const pool = regionInfo ? REGION_POOLS[regionInfo.poolKey] : null
+
+        const queryA = pool
+          ? buildRegionalQuery(pool, topHistoryArtists, 4)           // 4 fresh regional artists
+          : topHistoryArtists.slice(1, 4).map(a => `artist:"${a}"`).join(' OR ') // genre-diversify
+
+        const queryB = (() => {
+          // 2 of the user's top artists + 2 from the pool → bridges familiar & new
+          const userPart = topHistoryArtists.slice(0, 2).map(a => `artist:"${a}"`).join(' OR ')
+          if (pool) {
+            const freshPart = buildRegionalQuery(pool, topHistoryArtists, 2)
+            return `${userPart} OR ${freshPart}`
+          }
+          return userPart
+        })()
+
+        // ── Step 3: fire both queries in parallel ─────────────────
+        const [resA, resB] = await Promise.allSettled([
+          searchSpotify(queryA, ['track']),
+          searchSpotify(queryB, ['track']),
+        ])
+
+        // ── Step 4: merge, prioritise unheard, shuffle ────────────
+        const tracksA = resA.status === 'fulfilled' ? (resA.value.tracks?.items ?? []) : []
+        const tracksB = resB.status === 'fulfilled' ? (resB.value.tracks?.items ?? []) : []
+
+        const seen = new Set<string>()
+        const unheard: typeof tracksA = []
+        const familiar: typeof tracksA = []
+
+        for (const t of [...tracksA, ...tracksB]) {
+          if (seen.has(t.id) || !t.album?.images?.[0]) continue
+          seen.add(t.id)
+          if (heardIds.has(t.id)) familiar.push(t)
+          else unheard.push(t)
+        }
+
+        // Shuffle each bucket then combine: 75% unheard + 25% familiar (max 6)
+        const shuffledUnheard  = unheard.sort(() => Math.random() - 0.5)
+        const shuffledFamiliar = familiar.sort(() => Math.random() - 0.5).slice(0, 6)
+
+        recommendedTracks = [...shuffledUnheard, ...shuffledFamiliar]
+          .map(transformTrack)
+          .slice(0, 24)
+
+        // Label: show what drove the region, not just artist names
+        recommendedBasedOn = regionInfo
+          ? [`${regionInfo.label.replace('Trending ', '')} picks`]
+          : topHistoryArtists.slice(0, 3)
+
+        // ── Step 5: regional trending strip (separate section) ────
         if (regionInfo) {
-          regionalRes = await searchSpotify(regionInfo.query, ['track']).catch(() => null)
-        }
-
-        if (artistTracksRes.status === 'fulfilled') {
-          const seen = new Set<string>()
-          // Exclude songs the user has already listened to recently
-          const recentIds = new Set(recentlyPlayed.map(t => t.spotifyId))
-          const topIds = new Set(topHistoryTracks.map(t => t.spotifyId))
-          recommendedTracks = (artistTracksRes.value.tracks?.items ?? [])
-            .filter(t => {
-              if (seen.has(t.id) || !t.album?.images?.[0]) return false
-              if (recentIds.has(t.id) || topIds.has(t.id)) return false // exclude already played
-              seen.add(t.id); return true
-            })
-            .map(transformTrack)
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 24)
-          recommendedBasedOn = topHistoryArtists.slice(0, 3)
-        }
-
-        if (regionInfo && regionalRes) {
-          const seenR = new Set<string>()
-          regionalTracks = (regionalRes.tracks?.items ?? [])
-            .filter(t => { if (seenR.has(t.id) || !t.album?.images?.[0]) return false; seenR.add(t.id); return true })
-            .map(transformTrack)
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 24)
-          regionalLabel = regionInfo.label
+          const regionalRes = await searchSpotify(regionInfo.trendingQuery, ['track']).catch(() => null)
+          if (regionalRes) {
+            const seenR = new Set<string>()
+            regionalTracks = (regionalRes.tracks?.items ?? [])
+              .filter(t => { if (seenR.has(t.id) || !t.album?.images?.[0]) return false; seenR.add(t.id); return true })
+              .map(transformTrack)
+              .sort(() => Math.random() - 0.5)
+              .slice(0, 24)
+            regionalLabel = regionInfo.label
+          }
         }
 
         userCache.set(user.id, {
