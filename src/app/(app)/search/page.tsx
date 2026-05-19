@@ -1,8 +1,8 @@
 ﻿'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import TrackCard from '@/components/TrackCard'
 import AlbumCard from '@/components/AlbumCard'
 import { usePlayerStore } from '@/store/playerStore'
@@ -52,9 +52,10 @@ const CATS: Category[] = [
 
 type Tab = 'tracks' | 'artists' | 'albums'
 
-export default function SearchPage() {
+function SearchPageInner() {
   const router = useRouter()
-  const [query, setQuery] = useState('')
+  const searchParams = useSearchParams()
+  const [query, setQuery] = useState(searchParams.get('q') ?? '')
   const [focused, setFocused] = useState(false)
   const [results, setResults] = useState<SearchResults | null>(null)
   const [suggestions, setSuggestions] = useState<SearchResults | null>(null)
@@ -66,6 +67,12 @@ export default function SearchPage() {
   const [covers, setCovers] = useState<Record<string, string | null>>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const { playTrack } = usePlayerStore()
+
+  // Sync query from URL param (set by TopBar search)
+  useEffect(() => {
+    const q = searchParams.get('q') ?? ''
+    if (q) setQuery(q)
+  }, [searchParams])
 
   // Fetch album art covers for all genre cards on mount
   useEffect(() => {
@@ -146,10 +153,10 @@ export default function SearchPage() {
   const showSuggestions = focused && query.trim().length > 0 && !!suggestions
 
   return (
-    <div className="min-h-full flex flex-col pb-[68px]">
+    <div className="min-h-full flex flex-col">
 
       {/* ── Sticky search bar ──────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-[#0A0A0A]/90 backdrop-blur-xl border-b border-white/[0.05] px-6 py-4">
+      <div className="sticky top-0 z-30 bg-[#121212]/95 backdrop-blur-xl border-b border-white/[0.05] px-6 py-4">
         <div className="relative max-w-xl">
           <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6A6560] pointer-events-none z-10 flex-shrink-0"
             width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -168,12 +175,12 @@ export default function SearchPage() {
             autoFocus
             className="w-full bg-white/[0.07] border border-white/[0.09] rounded-full pl-10 pr-10 py-2.5
                        text-[14px] text-[#F5F0EB] placeholder-[#4A4540]
-                       focus:outline-none focus:border-[#4A7FFF]/40 focus:bg-white/[0.10] transition-all"
+                       focus:outline-none focus:border-[#1DB954]/40 focus:bg-white/[0.10] transition-all"
           />
 
           {loading && (
             <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <div className="w-3.5 h-3.5 border-[1.5px] border-[#4A7FFF]/30 border-t-[#4A7FFF] rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-[1.5px] border-[#1DB954]/30 border-t-[#1DB954] rounded-full animate-spin" />
             </div>
           )}
           {query && !loading && (
@@ -339,9 +346,9 @@ export default function SearchPage() {
                         </div>
                         <p className="text-[15px] font-bold text-[#F5F0EB] truncate leading-tight mb-0.5">{topResult.title}</p>
                         <p className="text-[11.5px] text-[#5A5550] truncate">{topResult.artist}</p>
-                        <div className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-[#4A7FFF] flex items-center justify-center
+                        <div className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-[#1DB954] flex items-center justify-center
                                         opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0
-                                        hover:scale-105 transition-all duration-200 shadow-lg shadow-[#4A7FFF]/30">
+                                        hover:scale-105 transition-all duration-200 shadow-lg shadow-black/40">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="white" style={{ marginLeft: 2 }}><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         </div>
                       </div>
@@ -436,7 +443,7 @@ export default function SearchPage() {
               <div className="w-[300px] flex-shrink-0 self-start sticky top-[88px]">
                 {artistLoading && (
                   <div className="rounded-2xl bg-white/[0.04] h-[480px] flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-[#4A7FFF]/30 border-t-[#4A7FFF] rounded-full animate-spin"/>
+                    <div className="w-6 h-6 border-2 border-[#1DB954]/30 border-t-[#1DB954] rounded-full animate-spin"/>
                   </div>
                 )}
 
@@ -450,8 +457,8 @@ export default function SearchPage() {
                           <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/30 to-transparent"/>
                         </>
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#4A7FFF]/20 to-[#C0392B]/10 flex items-center justify-center">
-                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4A7FFF" strokeWidth="1"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <div className="w-full h-full bg-gradient-to-br from-[#1DB954]/20 to-[#282828] flex items-center justify-center">
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1DB954" strokeWidth="1"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         </div>
                       )}
                       {/* Close button */}
@@ -476,7 +483,7 @@ export default function SearchPage() {
                           <button key={track.id} onClick={() => pickTrack(track, artistPanel.topTracks)}
                             className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.06] transition-colors group text-left">
                             <span className="text-[11px] text-[#3A3530] w-4 text-center flex-shrink-0 font-semibold group-hover:hidden">{i + 1}</span>
-                            <svg className="w-4 h-4 text-[#4A7FFF] hidden group-hover:block flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            <svg className="w-4 h-4 text-[#1DB954] hidden group-hover:block flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                             <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
                               {track.albumArt && <Image src={track.albumArt} alt="" fill className="object-cover" sizes="32px"/>}
                             </div>
@@ -527,7 +534,7 @@ export default function SearchPage() {
             </div>
             <p className="text-[14px] font-semibold text-[#F5F0EB]">Search unavailable right now</p>
             <p className="text-[12px] text-[#4A4540]">Spotify is rate limiting — wait a moment and try again</p>
-            <button onClick={() => search(query)} className="mt-1 text-[12px] font-bold text-[#4A7FFF] hover:text-[#93C5FD] transition-colors">
+            <button onClick={() => search(query)} className="mt-1 text-[12px] font-bold text-[#1DB954] hover:text-[#1ed760] transition-colors">
               Retry
             </button>
           </div>
@@ -545,5 +552,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-full" style={{ background: '#121212' }} />}>
+      <SearchPageInner />
+    </Suspense>
   )
 }

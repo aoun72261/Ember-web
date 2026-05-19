@@ -120,20 +120,20 @@ function CreatePlaylistModal({ onClose, onCreate }: {
             type="text" value={name} onChange={e => setName(e.target.value)}
             placeholder="Playlist name" maxLength={60}
             className="w-full bg-white/[0.06] border border-white/[0.08] rounded-xl px-4 py-3
-                       text-[14px] text-white placeholder-[#4A4540] focus:outline-none focus:border-[#4A7FFF]/50 transition-colors"
+                       text-[14px] text-white placeholder-[#4A4540] focus:outline-none focus:border-[#1DB954]/50 transition-colors"
           />
           <input
             type="text" value={desc} onChange={e => setDesc(e.target.value)}
             placeholder="Description (optional)" maxLength={120}
             className="w-full bg-white/[0.06] border border-white/[0.08] rounded-xl px-4 py-3
-                       text-[14px] text-white placeholder-[#4A4540] focus:outline-none focus:border-[#4A7FFF]/50 transition-colors"
+                       text-[14px] text-white placeholder-[#4A4540] focus:outline-none focus:border-[#1DB954]/50 transition-colors"
           />
         </div>
 
         <button
           onClick={submit}
           disabled={!name.trim() || saving}
-          className="mt-5 w-full bg-[#4A7FFF] hover:bg-[#6690FF] disabled:opacity-40 disabled:cursor-not-allowed
+          className="mt-5 w-full bg-[#1DB954] hover:bg-[#1ed760] disabled:opacity-40 disabled:cursor-not-allowed
                      text-white text-[14px] font-bold py-3 rounded-full transition-all"
         >
           {saving ? 'Creating…' : 'Create playlist'}
@@ -175,7 +175,7 @@ export default function LibraryPage() {
           <h1 className="text-[26px] font-black text-white tracking-tight">Your Library</h1>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 bg-[#4A7FFF] hover:bg-[#6690FF] text-white text-[13px] font-bold px-4 py-2.5 rounded-full transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#4A7FFF]/30"
+            className="flex items-center gap-2 bg-[#1DB954] hover:bg-[#1ed760] text-white text-[13px] font-bold px-4 py-2.5 rounded-full transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#1DB954]/30"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -202,7 +202,7 @@ export default function LibraryPage() {
         {/* Loading */}
         {loading && (
           <div className="flex justify-center py-20">
-            <div className="w-6 h-6 border-2 border-[#4A7FFF]/30 border-t-[#4A7FFF] rounded-full animate-spin"/>
+            <div className="w-6 h-6 border-2 border-[#1DB954]/30 border-t-[#1DB954] rounded-full animate-spin"/>
           </div>
         )}
 
@@ -264,14 +264,14 @@ export default function LibraryPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#4A7FFF]/20 to-[#C0392B]/20 flex items-center justify-center">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4A7FFF" strokeWidth="1.5">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#1DB954]/20 to-[#C0392B]/20 flex items-center justify-center">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1DB954" strokeWidth="1.5">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
               </div>
               <p className="text-[16px] font-bold text-[#F0EBE5]">No liked songs yet</p>
               <p className="text-[13px] text-[#4A4540]">Tap the ♥ on any track to save it here.</p>
-              <Link href="/search" className="text-[13px] font-bold text-[#4A7FFF] hover:text-[#93C5FD] transition-colors">
+              <Link href="/search" className="text-[13px] font-bold text-[#1DB954] hover:text-[#1ed760] transition-colors">
                 Find music →
               </Link>
             </div>
@@ -288,7 +288,7 @@ export default function LibraryPage() {
               }
             </div>
             <p className="text-[16px] font-bold text-[#F0EBE5]">No {activeTab.toLowerCase()} saved</p>
-            <Link href="/search" className="text-[13px] font-bold text-[#4A7FFF] hover:text-[#93C5FD] transition-colors">
+            <Link href="/search" className="text-[13px] font-bold text-[#1DB954] hover:text-[#1ed760] transition-colors">
               Browse music →
             </Link>
           </div>
