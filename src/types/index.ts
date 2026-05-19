@@ -18,6 +18,7 @@ export interface Artist {
   genres: string[]
   spotifyId: string
   popularity?: number
+  followers?: number
 }
 
 export interface Album {

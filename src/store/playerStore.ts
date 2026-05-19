@@ -18,6 +18,7 @@ interface PlayerState {
   repeatMode: 'off' | 'all' | 'one'
   accentColor: string | null  // dominant RGB from album art e.g. "74,127,255"
   isExpanded: boolean
+  showNowPlayingPanel: boolean
 
   // Actions
   playTrack: (track: Track, queue?: Track[]) => void
@@ -36,6 +37,7 @@ interface PlayerState {
   setLoading: (loading: boolean) => void
   setAccentColor: (color: string | null) => void
   setExpanded: (expanded: boolean) => void
+  toggleNowPlayingPanel: () => void
   addToQueue: (track: Track) => void
   clearQueue: () => void
 }
@@ -56,6 +58,7 @@ export const usePlayerStore = create<PlayerState>()(
       repeatMode: 'off',
       accentColor: null,
       isExpanded: false,
+      showNowPlayingPanel: false,
 
       playTrack: (track, queue) => {
         const newQueue = queue ?? [track]
@@ -128,6 +131,7 @@ export const usePlayerStore = create<PlayerState>()(
 
       setAccentColor: (color) => set({ accentColor: color }),
       setExpanded: (expanded) => set({ isExpanded: expanded }),
+      toggleNowPlayingPanel: () => set(s => ({ showNowPlayingPanel: !s.showNowPlayingPanel })),
       addToQueue: (track) => set(s => ({ queue: [...s.queue, track] })),
       clearQueue: () => set({ queue: [], queueIndex: 0 }),
     }),

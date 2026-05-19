@@ -16,9 +16,9 @@ import ListenTogetherModal from './ListenTogetherModal'
 export default function PlayerBar() {
   const {
     currentTrack, isPlaying, isLoading, progress, duration,
-    volume, isMuted, isShuffled, repeatMode,
+    volume, isMuted, isShuffled, repeatMode, showNowPlayingPanel,
     togglePlay, next, previous, seek, setVolume, toggleMute,
-    toggleShuffle, cycleRepeat, setAccentColor, setExpanded,
+    toggleShuffle, cycleRepeat, setAccentColor, setExpanded, toggleNowPlayingPanel,
   } = usePlayerStore()
 
   const volumeRef = useRef(volume)
@@ -311,6 +311,18 @@ export default function PlayerBar() {
             <circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </button>
+
+        {/* Now Playing Panel toggle */}
+        <button
+          onClick={toggleNowPlayingPanel}
+          title="Now Playing View"
+          className={`${showNowPlayingPanel ? activeIconBtn : iconBtn} flex-shrink-0`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="3" width="20" height="18" rx="2"/>
+            <line x1="15" y1="3" x2="15" y2="21"/>
           </svg>
         </button>
 
