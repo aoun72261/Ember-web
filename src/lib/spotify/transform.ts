@@ -24,6 +24,7 @@ export function transformArtist(a: SpotifyArtist): Artist {
     genres: a.genres ?? [],
     spotifyId: a.id,
     popularity: a.popularity,
+    followers: (a as any).followers?.total ?? 0,
   }
 }
 
