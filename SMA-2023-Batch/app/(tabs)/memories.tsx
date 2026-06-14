@@ -1,14 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-  RefreshControl,
-  SectionList,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, RefreshControl, SectionList } from 'react-native';
 import { Image } from 'expo-image';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
@@ -17,20 +10,20 @@ import { getPhotos, Photo } from '../../lib/supabase';
 const { width } = Dimensions.get('window');
 const THUMB = (width - 52) / 3;
 
-const CHAPTERS: Record<string, { emoji: string; gradient: [string, string] }> = {
-  'Year 1':     { emoji: '🌱', gradient: [Colors.cyan,   Colors.purple] },
-  'Year 2':     { emoji: '🌿', gradient: [Colors.purple, Colors.pink]   },
-  'Year 3':     { emoji: '🌳', gradient: [Colors.pink,   Colors.orange] },
-  'Graduation': { emoji: '🎓', gradient: [Colors.gold,   Colors.orange] },
-  'Prom':       { emoji: '👑', gradient: [Colors.pink,   Colors.purple] },
-  'Senior Trip':{ emoji: '✈️', gradient: [Colors.cyan,   Colors.lime]   },
-  'Sports Day': { emoji: '🏅', gradient: [Colors.lime,   Colors.cyan]   },
-  'Farewell':   { emoji: '🥹', gradient: [Colors.purple, Colors.pink]   },
+const CHAPTERS: Record<string, { emoji: string; color: string }> = {
+  'Year 1':     { emoji: '🌱', color: Colors.sage },
+  'Year 2':     { emoji: '🌿', color: Colors.sky },
+  'Year 3':     { emoji: '🌳', color: Colors.peach },
+  'Graduation': { emoji: '🎓', color: Colors.gold },
+  'Prom':       { emoji: '👑', color: Colors.rose },
+  'Senior Trip':{ emoji: '✈️', color: Colors.sky },
+  'Sports Day': { emoji: '🏅', color: Colors.sage },
+  'Farewell':   { emoji: '🥹', color: Colors.rose },
 };
 
-function chunk<T>(arr: T[], size: number): T[][] {
+function chunk<T>(arr: T[], n: number): T[][] {
   const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
   return out;
 }
 
@@ -50,91 +43,65 @@ export default function MemoriesScreen() {
         if (!byChapter[ch]) byChapter[ch] = [];
         byChapter[ch].push(p);
       }
-      setSections(
-        Object.entries(byChapter).map(([title, photos]) => ({ title, data: chunk(photos, 3) }))
-      );
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+      setSections(Object.entries(byChapter).map(([title, photos]) => ({ title, data: chunk(photos, 3) })));
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); setRefreshing(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={{ fontSize: 40 }}>⏳</Text>
-        <Text style={styles.emptyText}>Loading chapters...</Text>
-      </View>
-    );
-  }
+  if (loading) return (
+    <View style={[styles.container, styles.centered]}>
+      <Text style={{ fontSize: 44 }}>⏳</Text>
+      <Text style={styles.emptyText}>Loading chapters...</Text>
+    </View>
+  );
 
-  if (sections.length === 0) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={{ fontSize: 52 }}>🎞️</Text>
-        <Text style={styles.emptyText}>No chapters yet bro</Text>
-        <Text style={styles.emptyHint}>Set a chapter field on photos in Supabase</Text>
-      </View>
-    );
-  }
+  if (sections.length === 0) return (
+    <View style={[styles.container, styles.centered]}>
+      <Text style={{ fontSize: 52 }}>🎞️</Text>
+      <Text style={styles.emptyText}>No chapters yet</Text>
+      <Text style={styles.emptyHint}>Set chapter field on photos in Supabase</Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={[Colors.gold + '18', 'transparent']} style={styles.headerGrad}>
-        <Text style={styles.headerTitle}>Memories 📖</Text>
-        <Text style={styles.headerSub}>chapter by chapter, no cap</Text>
-      </LinearGradient>
+      <BlurView intensity={70} tint="light" style={styles.header}>
+        <Text style={styles.title}>Memories 📖</Text>
+        <Text style={styles.subtitle}>chapter by chapter, no cap</Text>
+      </BlurView>
 
       <SectionList
         sections={sections}
         keyExtractor={(row, i) => String(i)}
         stickySectionHeadersEnabled={false}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={Colors.gold} />
-        }
+        contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={Colors.gold} />}
         renderSectionHeader={({ section }) => {
           const ch = CHAPTERS[section.title];
-          const grad = ch?.gradient ?? [Colors.pink, Colors.purple];
+          const color = ch?.color ?? Colors.rose;
           return (
-            <View style={styles.chapterHeader}>
-              <LinearGradient
-                colors={grad}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.chapterLine}
-              />
-              <View style={styles.chapterRow}>
-                <LinearGradient colors={grad} style={styles.chapterDot} />
-                <Text style={styles.chapterEmoji}>{ch?.emoji ?? '📷'}</Text>
-                <Text style={styles.chapterTitle}>{section.title}</Text>
-                <Text style={styles.chapterCount}>
-                  {section.data.flat().length} pics
-                </Text>
+            <BlurView intensity={55} tint="light" style={styles.chapterHeader}>
+              <View style={[styles.chapterDot, { backgroundColor: color }]} />
+              <Text style={styles.chapterEmoji}>{ch?.emoji ?? '📷'}</Text>
+              <Text style={styles.chapterTitle}>{section.title}</Text>
+              <View style={[styles.countPill, { backgroundColor: color + '22', borderColor: color + '66' }]}>
+                <Text style={[styles.countText, { color }]}>{section.data.flat().length} pics</Text>
               </View>
-            </View>
+            </BlurView>
           );
         }}
         renderItem={({ item: row }) => (
           <View style={styles.thumbRow}>
-            {row.map((photo) => (
-              <TouchableOpacity
-                key={photo.id}
-                style={styles.thumb}
-                onPress={() => router.push(`/photo/${photo.id}`)}
-                activeOpacity={0.85}
-              >
+            {row.map(photo => (
+              <TouchableOpacity key={photo.id} style={styles.thumb} onPress={() => router.push(`/photo/${photo.id}`)} activeOpacity={0.88}>
                 <Image source={{ uri: photo.url }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
-                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)']} style={StyleSheet.absoluteFill} />
               </TouchableOpacity>
             ))}
           </View>
         )}
-        contentContainerStyle={styles.list}
       />
     </View>
   );
@@ -143,25 +110,49 @@ export default function MemoriesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   centered: { alignItems: 'center', justifyContent: 'center', gap: 10 },
-  headerGrad: { paddingTop: 56, paddingBottom: 14, paddingHorizontal: 20 },
-  headerTitle: { fontSize: 26, fontWeight: '900', color: Colors.white, letterSpacing: 0.3 },
-  headerSub: { fontSize: 13, color: Colors.gold, fontWeight: '600', marginTop: 2 },
-  list: { paddingBottom: 24 },
-  chapterHeader: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-  chapterLine: { height: 2, borderRadius: 1, marginBottom: 10, opacity: 0.6 },
-  chapterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  header: {
+    paddingTop: 58,
+    paddingBottom: 14,
+    paddingHorizontal: 20,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.borderLight,
+  },
+  title: { fontSize: 24, fontWeight: '800', color: Colors.text },
+  subtitle: { fontSize: 13, color: Colors.gold, fontWeight: '600', marginTop: 2 },
+  list: { paddingBottom: 100 },
+  chapterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginTop: 6,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.borderLight,
+    overflow: 'hidden',
+  },
   chapterDot: { width: 8, height: 8, borderRadius: 4 },
-  chapterEmoji: { fontSize: 18 },
-  chapterTitle: { fontSize: 18, fontWeight: '800', color: Colors.textPrimary, flex: 1 },
-  chapterCount: { fontSize: 11, color: Colors.textSecondary, fontWeight: '600' },
-  thumbRow: { flexDirection: 'row', gap: 4, paddingHorizontal: 16, marginBottom: 4 },
+  chapterEmoji: { fontSize: 16 },
+  chapterTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: Colors.text },
+  countPill: {
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  countText: { fontSize: 11, fontWeight: '700' },
+  thumbRow: { flexDirection: 'row', gap: 4, padding: 4, paddingHorizontal: 16 },
   thumb: {
     width: THUMB,
     height: THUMB,
-    borderRadius: 8,
+    borderRadius: 10,
     overflow: 'hidden',
     backgroundColor: Colors.bgCard,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
-  emptyText: { color: Colors.textSecondary, fontSize: 16, fontWeight: '700' },
-  emptyHint: { color: '#555580', fontSize: 12, textAlign: 'center', paddingHorizontal: 40 },
+  emptyText: { color: Colors.textSec, fontSize: 16, fontWeight: '700' },
+  emptyHint: { color: Colors.textMuted, fontSize: 12, textAlign: 'center', paddingHorizontal: 40 },
 });

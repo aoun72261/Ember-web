@@ -1,31 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Dimensions,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, RefreshControl } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { getPhotos, Photo } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
-
-const CHAPTER_COLORS: Record<string, [string, string]> = {
-  'Year 1':     [Colors.cyan, Colors.purple],
-  'Year 2':     [Colors.purple, Colors.pink],
-  'Year 3':     [Colors.pink, Colors.orange],
-  'Graduation': [Colors.gold, Colors.orange],
-  'Prom':       [Colors.pink, Colors.purple],
-  'Senior Trip':[Colors.cyan, Colors.lime],
-  'Sports Day': [Colors.lime, Colors.cyan],
-  'Farewell':   [Colors.purple, Colors.pink],
-};
 
 export default function GroupsScreen() {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -33,82 +14,55 @@ export default function GroupsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    try {
-      const data = await getPhotos({ is_group: true });
-      setPhotos(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    try { setPhotos(await getPhotos({ is_group: true })); }
+    catch (e) { console.error(e); }
+    finally { setLoading(false); setRefreshing(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={[Colors.cyan + '18', 'transparent']} style={styles.headerGrad}>
-        <Text style={styles.headerTitle}>Group Shots 👥</Text>
-        <Text style={styles.headerSub}>when we were all together 🔥</Text>
-      </LinearGradient>
+      <BlurView intensity={70} tint="light" style={styles.header}>
+        <Text style={styles.title}>Group Shots 👥</Text>
+        <Text style={styles.subtitle}>when we were all together 🔥</Text>
+      </BlurView>
 
       {loading ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyEmoji}>👀</Text>
-          <Text style={styles.emptyText}>Loading...</Text>
-        </View>
+        <View style={styles.empty}><Text style={{ fontSize: 44 }}>👀</Text><Text style={styles.emptyText}>Loading...</Text></View>
       ) : photos.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyEmoji}>🫂</Text>
+          <Text style={{ fontSize: 44 }}>🫂</Text>
           <Text style={styles.emptyText}>No group shots yet</Text>
-          <Text style={styles.emptyHint}>Set is_group = true on photos in Supabase</Text>
+          <Text style={styles.emptyHint}>Set is_group = true in Supabase</Text>
         </View>
       ) : (
         <FlatList
           data={photos}
-          keyExtractor={(item) => item.id}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={Colors.cyan} />
-          }
+          keyExtractor={(i) => i.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => {
-            const chapterColors = CHAPTER_COLORS[item.chapter ?? ''] ?? [Colors.pink, Colors.purple];
-            return (
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() => router.push(`/photo/${item.id}`)}
-                activeOpacity={0.88}
-              >
-                {/* Colored top border accent */}
-                <LinearGradient
-                  colors={chapterColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.cardAccent}
-                />
-                <Image source={{ uri: item.url }} style={styles.cardImage} contentFit="cover" transition={300} />
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.75)']}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View style={styles.cardOverlay}>
-                  {item.caption && <Text style={styles.cardCaption}>{item.caption}</Text>}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={Colors.sky} />}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => router.push(`/photo/${item.id}`)}
+              activeOpacity={0.9}
+            >
+              <Image source={{ uri: item.url }} style={styles.cardImg} contentFit="cover" transition={300} />
+              {/* Frosted glass footer */}
+              <BlurView intensity={65} tint="light" style={styles.cardFooter}>
+                <View style={styles.footerInner}>
+                  {item.caption && <Text style={styles.caption}>{item.caption}</Text>}
                   {item.chapter && (
-                    <LinearGradient
-                      colors={chapterColors}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.chapterTag}
-                    >
+                    <View style={styles.chapterPill}>
                       <Text style={styles.chapterText}>{item.chapter}</Text>
-                    </LinearGradient>
+                    </View>
                   )}
                 </View>
-              </TouchableOpacity>
-            );
-          }}
+              </BlurView>
+            </TouchableOpacity>
+          )}
         />
       )}
     </View>
@@ -117,34 +71,55 @@ export default function GroupsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  headerGrad: { paddingTop: 56, paddingBottom: 14, paddingHorizontal: 20 },
-  headerTitle: { fontSize: 26, fontWeight: '900', color: Colors.white, letterSpacing: 0.3 },
-  headerSub: { fontSize: 13, color: Colors.cyan, fontWeight: '600', marginTop: 2 },
-  list: { paddingHorizontal: 16, paddingBottom: 24, gap: 16 },
+  header: {
+    paddingTop: 58,
+    paddingBottom: 14,
+    paddingHorizontal: 20,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.borderLight,
+  },
+  title: { fontSize: 24, fontWeight: '800', color: Colors.text },
+  subtitle: { fontSize: 13, color: Colors.sky, fontWeight: '600', marginTop: 2 },
+  list: { padding: 16, gap: 14, paddingBottom: 100 },
   card: {
     width: width - 32,
     height: (width - 32) * 0.62,
-    borderRadius: 18,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: Colors.bgCard,
+    shadowColor: '#000',
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 6,
   },
-  cardAccent: { height: 3, width: '100%' },
-  cardImage: { width: '100%', height: '100%' },
-  cardOverlay: {
+  cardImg: { width: '100%', height: '100%' },
+  cardFooter: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.borderGlass,
+    overflow: 'hidden',
   },
-  cardCaption: { color: Colors.white, fontSize: 14, fontWeight: '700', flex: 1 },
-  chapterTag: { borderRadius: 8, paddingHorizontal: 11, paddingVertical: 5, marginLeft: 10 },
-  chapterText: { color: '#000', fontSize: 10, fontWeight: '900', textTransform: 'uppercase' },
+  footerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  caption: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.text },
+  chapterPill: {
+    backgroundColor: Colors.rose,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  chapterText: { color: Colors.white, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  emptyEmoji: { fontSize: 52 },
-  emptyText: { color: Colors.textSecondary, fontSize: 16, fontWeight: '700' },
-  emptyHint: { color: '#555580', fontSize: 12, textAlign: 'center', paddingHorizontal: 40 },
+  emptyText: { color: Colors.textSec, fontSize: 16, fontWeight: '700' },
+  emptyHint: { color: Colors.textMuted, fontSize: 12, textAlign: 'center', paddingHorizontal: 40 },
 });
